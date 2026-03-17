@@ -1,0 +1,53 @@
+{
+    "configurations": [
+        {
+            "name": "windows-gcc-x64",
+            "includePath": [
+               "d:/RM/code/25-EE-code/**",
+                "d:/RM/code/25-EE-code/Omni/Applications/Software"
+            ],
+            "compilerPath": "D:/Program Files (x86)/Dev-Cpp/MinGW64/bin/gcc.exe",
+            "intelliSenseMode": "windows-gcc-x64",
+            "compilerArgs": [
+                ""
+            ],
+            "compilerPathInCppPropertiesJson": "D:/Program Files (x86)/Dev-Cpp/MinGW64/bin/gcc.exe",
+            "mergeConfigurations": false,
+            "browse": {
+                "path": [
+                    "d:/RM/code/25-EE-code/**",
+                    "d:/RM/code/25-EE-code/Omni/Applications/Software",
+                    "${workspaceFolder}"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            },
+            "cStandard": "c17"
+        },
+        {
+            "name": "arm-gnu-toolchain",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/User/Algorithm",
+                "${workspaceFolder}/User/Algorithm/Include",
+                "${workspaceFolder}/User/Hardware",
+                "${workspaceFolder}/User/Hardware/IMU",
+                "${workspaceFolder}/User/Hardware/Motor",
+                "${workspaceFolder}/User/Hardware/Remote",
+                "${workspaceFolder}/User/BSP",
+                "${workspaceFolder}/User/Software",
+                "${workspaceFolder}/User/Software/Chassis",
+                "${workspaceFolder}/User/Software/Gimbal",
+                "${workspaceFolder}/User/Software/Shoot"
+            ],
+            "defines": [
+                "USE_HAL_DRIVER",
+                "STM32H723xx"
+            ],
+            "compilerPath": "D:/arm-none-eabi-gcc/bin/arm-none-eabi-gcc.exe",
+            "cStandard": "c17",
+            "cppStandard": "gnu++14",
+            "intelliSenseMode": "gcc-arm"
+        }
+    ],
+    "version": 4
+}

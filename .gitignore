@@ -1,0 +1,9 @@
+# === 全局通用规则 ===
+# 编译产物
+/build/
+*.bin
+
+# 临时文件
+User/thinking
+User/thinking_final_solution.md
+
