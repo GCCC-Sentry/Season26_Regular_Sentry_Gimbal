@@ -2,8 +2,8 @@
  * @Author: Nas(1319621819@qq.com)
  * @Date: 2025-11-03 00:07:24
  * @LastEditors: Nas(1319621819@qq.com)
- * @LastEditTime: 2026-03-17 21:59:35
- * @FilePath: \Regular_Sentry_Gimbal\User\Software\Chassis.c
+ * @LastEditTime: 2026-03-18 08:16:44
+ * @FilePath: \Season26_Regular_Sentry_Gimbal\User\Software\Chassis.c
  */
 
 /*
@@ -509,11 +509,11 @@ void Mode_Switch()
 
                                 if (hurt_high_spin_latched)
                                 {
-                                    Global.Chassis.input.r = 120 * RPM_TO_DEG_S;
+                                    Global.Chassis.input.r = 60 * RPM_TO_DEG_S;
                                 }
                                 else
                                 {
-                                    Global.Chassis.input.r = 60 * RPM_TO_DEG_S;
+                                    Global.Chassis.input.r = 40 * RPM_TO_DEG_S;
                                 }
                             }
                         else

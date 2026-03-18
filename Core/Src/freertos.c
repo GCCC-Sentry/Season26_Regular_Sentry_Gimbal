@@ -1,8 +1,8 @@
 /*
  * @Date: 2025-10-24 19:37:34
  * @LastEditors: Nas(1319621819@qq.com)
- * @LastEditTime: 2026-03-15 14:14:56
- * @FilePath: \Regular_Sentry_Gimbal\Core\Src\freertos.c
+ * @LastEditTime: 2026-03-18 18:29:33
+ * @FilePath: \Season26_Regular_Sentry_Gimbal\Core\Src\freertos.c
  */
 /* USER CODE BEGIN Header */
 /**
@@ -287,6 +287,7 @@ void Chassis_Task(void *argument)
       case 0:
         Send_to_Chassis_1();
         Send_to_Chassis_2();
+        Send_to_Chassis_3();
         Send_to_Chassis_7();
         break;
       
@@ -301,6 +302,7 @@ void Chassis_Task(void *argument)
         Send_to_Chassis_5(); 
         Supercup_SendData();
         Send_to_Chassis_2();
+        Send_to_Chassis_3();
         Send_to_Chassis_6();
         Send_to_Chassis_7();
         break;

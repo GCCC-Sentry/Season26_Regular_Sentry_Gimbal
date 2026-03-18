@@ -2,8 +2,8 @@
  * @Author: Nas(1319621819@qq.com)
  * @Date: 2025-11-03 00:07:24
  * @LastEditors: Nas(1319621819@qq.com)
- * @LastEditTime: 2026-03-18 01:37:34
- * @FilePath: \Regular_Sentry_Gimbal\User\Software\Gimbal.c
+ * @LastEditTime: 2026-03-18 18:50:56
+ * @FilePath: \Season26_Regular_Sentry_Gimbal\User\Software\Gimbal.c
  */
 /*
   ****************************(C) COPYRIGHT 2026 ADAM****************************
