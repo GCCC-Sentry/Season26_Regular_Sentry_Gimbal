@@ -2,7 +2,7 @@
  * @Author: Nas(1319621819@qq.com)
  * @Date: 2025-11-03 00:07:24
  * @LastEditors: Nas(1319621819@qq.com)
- * @LastEditTime: 2026-03-20 00:13:10
+ * @LastEditTime: 2026-03-20 04:39:57
  * @FilePath: \Season26_Regular_Sentry_Gimbal\User\Software\Auto_control.c
  */
 
@@ -74,11 +74,13 @@ void Receive_from_Chassis_2(uint8_t data[8])
     Referee.projectile_allowance_17mm = bytes_to_uint16(&data[0]);
     Referee.outpost_HP = bytes_to_uint16(&data[2]);
     Referee.base_HP = bytes_to_uint16(&data[4]);
+    Referee.launching_frequency = bytes_to_uint8(&data[6]);
 }
 
 void Receive_from_Chassis_3(uint8_t data[8])
 {
     Referee.rfid_status = bytes_to_float(&data[0]);
+    Referee.initial_speed = bytes_to_float(&data[4]);
 }
 
 /**
@@ -196,8 +198,8 @@ void STM32_to_MINIPC()
     toMINIPC.q[1] = imu_gimbal.q[1];//IMU_data.AHRS.q[1];
     toMINIPC.q[2] = imu_gimbal.q[2];//IMU_data.AHRS.q[2];
     toMINIPC.q[3] = imu_gimbal.q[3];//IMU_data.AHRS.q[3];
-    toMINIPC.bullet_speed = Referee_data.Initial_SPEED;
-    toMINIPC.bullet_count = Referee_data.Launching_Frequency;
+    toMINIPC.bullet_speed = Referee.initial_speed;
+    toMINIPC.bullet_count = Referee.launching_frequency;
     //toMINIPC.crc16 = get_CRC16_check_sum(&toMINIPC.header,41,0xFFFF);
     int len = (uint8_t *)&toMINIPC.crc16 - (uint8_t *)&toMINIPC;
     // 此时调用 CRC，无论结构体怎么变都永远正确
@@ -348,5 +350,7 @@ void Auto_Control()
     
     Gimbal_SetYawAngle(smooth_target_yaw);
     Gimbal_SetPitchAngle(-smooth_target_pitch); 
+    // 新增：同步到 Auto_data，供 Send_to_Chassis_2 或调试使用
+    Auto_data.target_yaw = smooth_target_yaw;
 }
 

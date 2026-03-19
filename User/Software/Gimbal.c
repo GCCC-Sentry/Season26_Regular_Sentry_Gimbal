@@ -2,7 +2,7 @@
  * @Author: Nas(1319621819@qq.com)
  * @Date: 2025-11-03 00:07:24
  * @LastEditors: Nas(1319621819@qq.com)
- * @LastEditTime: 2026-03-20 00:11:09
+ * @LastEditTime: 2026-03-20 00:40:37
  * @FilePath: \Season26_Regular_Sentry_Gimbal\User\Software\Gimbal.c
  */
 /*
@@ -159,7 +159,7 @@ void Gimbal_Init()
     PID_Set(&Gimbal.small_yaw.small_yaw_location_pid, 4.0f, 0.0f, 1.0f, 0.0f, GIMBALMOTOR_MAX_CURRENT, 1000);
     // 自瞄
     PID_Set(&Gimbal.pitch.pitch_auto_location_pid, 16.0f, 0.0f, 10, 0.0f, 12.57, 100);
-    PID_Set(&Gimbal.small_yaw.small_yaw_auto_location_pid, 13.0f, 0.0f, 3.5f, 0.0f, GIMBALMOTOR_MAX_CURRENT, 1000);
+    PID_Set(&Gimbal.small_yaw.small_yaw_auto_location_pid, 12.5f, 0.0f, 3.5f, 0.0f, GIMBALMOTOR_MAX_CURRENT, 1000);
 
     // 云台零点初始化
     DJIMotor_SetZero(SMALL_YAW_ZERO,SMALLYAWMotor);
@@ -212,7 +212,10 @@ void Gimbal_Updater()
 
 
     Gimbal.pitch.pitch_location_set = degree2rad(Global.Gimbal.input.pitch);
-    Gimbal.small_yaw.small_yaw_location_set = Global.Gimbal.input.yaw; 
+    if (!(Global.Auto.mode != NONE && Global.Auto.input.Auto_control_online > 0 && Global.Auto.input.fire == -1))
+    {
+        Gimbal.small_yaw.small_yaw_location_set = Global.Gimbal.input.yaw; 
+    } 
     // 假设 Gimbal.small_yaw.small_yaw_location_now 是当前小yaw的角度
 /*     IMU_Rotate_Frame(Gimbal.small_yaw.small_yaw_location_now,&imu_gimbal); */
 }

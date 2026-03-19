@@ -233,6 +233,7 @@ typedef struct
 {
     uint8_t game_type;
     uint8_t game_progress;
+    uint8_t launching_frequency;
     uint16_t current_HP;
     uint16_t maximum_HP;
     uint16_t stage_remain_time;
@@ -240,6 +241,7 @@ typedef struct
     uint16_t outpost_HP;
     uint16_t base_HP;
     uint32_t rfid_status;
+    uint32_t initial_speed;
 }Referee_data_t;
 
 /**

@@ -2,7 +2,7 @@
  * @Author: Nas(1319621819@qq.com)
  * @Date: 2025-11-03 00:07:24
  * @LastEditors: Nas(1319621819@qq.com)
- * @LastEditTime: 2026-03-19 21:30:42
+ * @LastEditTime: 2026-03-20 03:08:56
  * @FilePath: \Season26_Regular_Sentry_Gimbal\User\Software\Chassis.c
  */
 
@@ -509,7 +509,7 @@ void Mode_Switch()
 
                                 if (hurt_high_spin_latched)
                                 {
-                                    Global.Chassis.input.r = 60 * RPM_TO_DEG_S;
+                                    Global.Chassis.input.r = 80 * RPM_TO_DEG_S;
                                 }
                                 else
                                 {
@@ -732,10 +732,20 @@ void Send_to_Chassis_2()
 {
     /* if(Global.Control.mode == LOCK) return; */
     uint8_t can_send_data[8]; // 发送缓冲区
-    if(Global.Auto.input.fire != -1 && Global.Auto.input.fire != 0)
-    Gimbal.big_yaw.big_yaw_location_set = Auto_data.target_yaw;
+    float encoder_relative = (float)DJIMotor_GetData(SMALLYAWMotor).angle;
+    
+    if (Global.Auto.input.fire != -1 && Global.Auto.input.Auto_control_online > 0)
+    {
+        // 自瞄状态（含扫描到目标后）：大 yaw 跟随小 yaw
+        // big_yaw 目标 = 大yaw当前编码器位置 + 小yaw相对大yaw的偏移
+        Gimbal.big_yaw.big_yaw_location_set = relative_angle + encoder_relative;
+    }
     else
-    Gimbal.big_yaw.big_yaw_location_set = Global.Gimbal.input.yaw;
+    {
+        // 非自瞄（遥控/导航）：保持现有逻辑
+        Gimbal.big_yaw.big_yaw_location_set = Global.Gimbal.input.yaw; 
+        // 注意：非自瞄模式也可能有坐标系问题，但那是另一个话题
+    }
     float_to_bytes(R_speed, &can_send_data[0]);
     float_to_bytes(Gimbal.big_yaw.big_yaw_location_set, &can_send_data[4]);
     Fdcanx_SendData(&hfdcan2, CAN_ID_CHASSIS_SPEED_R_YAW, can_send_data, 8);

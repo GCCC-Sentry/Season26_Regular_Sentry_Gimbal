@@ -308,7 +308,7 @@ void RC_Controller()
          Global.Auto.input.fire == 1) || (RC_data.rc.ch[4] >= 300 &&
         RC_data.rc.ch[4] <= 660)) && RC_data.rc.s[0]==RC_SW_MID)
     {
-        Global.Shoot.tigger_mode = ONLY_AIM_MID;
+        Global.Shoot.tigger_mode = TRIGGER_CLOSE;
     }
     else if (
         Global.Shoot.shoot_mode != CLOSE &&
@@ -316,7 +316,7 @@ void RC_Controller()
          Global.Auto.input.fire == 1) || (RC_data.rc.ch[4] >= 300 &&
         RC_data.rc.ch[4] <= 660)) && RC_data.rc.s[0]==RC_SW_DOWN)
          {
-            Global.Shoot.tigger_mode = ONLY_AIM_LOW;
+            Global.Shoot.tigger_mode = TRIGGER_CLOSE;
          }
     else if (RC_data.rc.ch[4] >= -660 &&
              RC_data.rc.ch[4] <= -330 &&
