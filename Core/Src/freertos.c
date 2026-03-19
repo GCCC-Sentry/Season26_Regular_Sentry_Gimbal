@@ -378,17 +378,10 @@ void Shoot_Task(void *argument)
   /* Infinite loop */
   for(;;)
   {
-    
-  if (Global.Auto.mode != NONE &&  Global.Auto.input.Auto_control_online > 0 && Global.Auto.input.fire == -1 )
-  {
-    Scan();
-    Auto_data.is_scaning = 1;
-  }
-  
-  else if(Global.Auto.mode != NONE && Global.Auto.input.Auto_control_online > 0 && Global.Auto.input.fire != -1)
+
+  if(Global.Auto.mode != NONE && Global.Auto.input.Auto_control_online > 0 && Global.Auto.input.fire != -1)
   {
     Auto_Control();
-    Auto_data.is_scaning = 0;
   }
 
   Shoot_Tasks();

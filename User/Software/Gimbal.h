@@ -2,8 +2,8 @@
  * @Author: Nas(1319621819@qq.com)
  * @Date: 2025-12-25 19:38:32
  * @LastEditors: Nas(1319621819@qq.com)
- * @LastEditTime: 2026-03-10 22:46:07
- * @FilePath: \Regular_Sentry_Gimbal\User\Software\Gimbal.h
+ * @LastEditTime: 2026-03-19 23:04:36
+ * @FilePath: \Season26_Regular_Sentry_Gimbal\User\Software\Gimbal.h
  */
 /*
   ****************************(C) COPYRIGHT 2026 ADAM****************************
@@ -100,7 +100,6 @@ void Gimbal_SetYawAngle(float angle);
 void Gimbal_Limit(float pitch_up_angle, float pitch_down_angle, float yaw_L_angle, float yaw_R_angle);
 void Scan();
 void relative_angle_big_yaw_receive(uint8_t data[8]);
-void Arm();
 extern Gimbal_t Gimbal;
 // 添加 volatile 防止编译器优化导致的变量读取不同步
 extern float relative_angle;

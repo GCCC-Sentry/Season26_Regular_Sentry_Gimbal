@@ -2,7 +2,7 @@
  * @Author: Nas(1319621819@qq.com)
  * @Date: 2025-11-03 00:07:24
  * @LastEditors: Nas(1319621819@qq.com)
- * @LastEditTime: 2026-03-19 05:10:44
+ * @LastEditTime: 2026-03-20 00:11:09
  * @FilePath: \Season26_Regular_Sentry_Gimbal\User\Software\Gimbal.c
  */
 /*
@@ -30,7 +30,7 @@
 #include "hipnuc_dec.h"
 #include "motor.h"
 #include "vofa+.h"
-
+#include "Auto_control.h"
 
 Gimbal_t Gimbal;
 float relative_angle;
@@ -54,12 +54,12 @@ void Gimbal_Limit(float pitch_up_angle, float pitch_down_angle, float yaw_L_angl
  */
 void Scan() 
 {
-    const float PITCH_MAX = PITCHI_MAX_ANGLE;    
+    const float PITCH_MAX = 15.0f;//PITCHI_MAX_ANGLE;    
     const float PITCH_MIN = PITCHI_MIN_ANGLE;   
-    const float STEP = 0.30f;                    
+    const float STEP = 0.15f;                    
 
     // 小 Yaw 扫描参数：相对大 Yaw 往复扫描，自动适配大 Yaw 任意旋转
-    const float SCAN_LIMIT = 55.0f;   // ±55° 相对大Yaw（机械限位±60°，留5°安全余量）
+    const float SCAN_LIMIT = 60.0f;   // ±55° 相对大Yaw（机械限位±60°，留5°安全余量）
     const float SCAN_STEP  = 0.18f;   // 90°/s
 
     static float scan_pitch_deg = 0.0f;
@@ -82,21 +82,21 @@ void Scan()
     {
         scan_pitch_deg += STEP;
         // 如果物理位置已经接近上限，或者目标值已经严重越界，则换向
-        if (phys_now >= (PITCH_MAX - 1.0f) || scan_pitch_deg > (PITCH_MAX + 5.0f)) {
+        if (phys_now >= (PITCH_MAX - 1.0f) || scan_pitch_deg > (PITCH_MAX + 3.0f)) {
             Gimbal.pitch.turnover_pitch = 0;
         }
     }
     else // 向下扫描
     {
         scan_pitch_deg -= STEP;
-        if (phys_now <= (PITCH_MIN + 1.0f) || scan_pitch_deg < (PITCH_MIN - 5.0f)) {
+        if (phys_now <= (PITCH_MIN + 1.0f) || scan_pitch_deg < (PITCH_MIN - 3.0f)) {
             Gimbal.pitch.turnover_pitch = 1;
         }
     }
 
     // 限制 scan_pitch_deg 范围，防止目标值无限累加
-    if (scan_pitch_deg > PITCH_MAX + 5.0f) scan_pitch_deg = PITCH_MAX + 5.0f;
-    if (scan_pitch_deg < PITCH_MIN - 5.0f) scan_pitch_deg = PITCH_MIN - 5.0f;
+    if (scan_pitch_deg > PITCH_MAX + 3.0f) scan_pitch_deg = PITCH_MAX + 3.0f;
+    if (scan_pitch_deg < PITCH_MIN - 3.0f) scan_pitch_deg = PITCH_MIN - 3.0f;
 
     // 同步给全局变量，防止被 Updater 覆盖
     Global.Gimbal.input.pitch = scan_pitch_deg;
@@ -127,10 +127,7 @@ void Scan()
     Gimbal.small_yaw.small_yaw_location_set = big_yaw_world + scan_offset;
 }
 
-void Arm()
-{
-    
-}
+
 /*-------------------- Init --------------------*/
 
 /**
@@ -146,9 +143,9 @@ void Gimbal_Init()
     DJIMotor_Init(DJI_GM6020, SMALLYAWMotor);
     
     /*------MIT模式参数初始化------*/
-    Gimbal.pitch.kp = 25.0f;  // 位置比例增益 
+    Gimbal.pitch.kp = 15.0f;  // 位置比例增益 
     Gimbal.pitch.kd = 2.0f;   // 速度阻尼增益
-    Gimbal.pitch.k_gravity = 0.891800784f; // 重力前馈系数
+    Gimbal.pitch.k_gravity = 0.4;//0.891800784f; // 重力前馈系数
     
     /*PID速度环初始化*/ 
     // 遥控
@@ -603,6 +600,17 @@ void Gimbal_Tasks(void)
    {
         Scan();
    } */
+  if (Global.Auto.mode != NONE && 
+        Global.Auto.input.Auto_control_online > 0 && 
+        Global.Auto.input.fire == -1)
+    {
+        Scan();
+        Auto_data.is_scaning = 1;
+    }
+    else
+    {
+        Auto_data.is_scaning = 0;
+    }
 
     // 云台控制解算
     Gimbal_Calculater();

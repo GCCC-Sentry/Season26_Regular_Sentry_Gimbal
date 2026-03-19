@@ -98,7 +98,6 @@ uint32_t fdcan_freq;
   */
 int main(void)
 
-
 {
   /* USER CODE BEGIN 1 */
 
