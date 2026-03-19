@@ -2,7 +2,7 @@
  * @Author: Nas(1319621819@qq.com)
  * @Date: 2025-11-03 00:07:24
  * @LastEditors: Nas(1319621819@qq.com)
- * @LastEditTime: 2026-03-18 08:16:44
+ * @LastEditTime: 2026-03-19 21:30:42
  * @FilePath: \Season26_Regular_Sentry_Gimbal\User\Software\Chassis.c
  */
 
@@ -489,7 +489,7 @@ void Mode_Switch()
         Chassis.relative_angle = relative_angle;
 /*         if(Navigation_online != 0 )
         { */
-            if (Navigation_receive_1.x_speed != 0 && Navigation_receive_1.y_speed != 0)
+            if (Navigation_receive_1.x_speed != 0 || Navigation_receive_1.y_speed != 0)
         {
             Global.Chassis.input.x = Navigation_receive_1.x_speed * 200.0f;
             Global.Chassis.input.y = Navigation_receive_1.y_speed * 200.0f;

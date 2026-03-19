@@ -2,7 +2,7 @@
  * @Author: Nas(1319621819@qq.com)
  * @Date: 2025-11-03 00:07:24
  * @LastEditors: Nas(1319621819@qq.com)
- * @LastEditTime: 2026-03-18 18:50:56
+ * @LastEditTime: 2026-03-19 05:10:44
  * @FilePath: \Season26_Regular_Sentry_Gimbal\User\Software\Gimbal.c
  */
 /*
@@ -155,14 +155,14 @@ void Gimbal_Init()
     PID_Set(&Gimbal.pitch.pitch_speed_pid, 0.165f, 0.0f, 0.2f, 0.0f, 7, 0.1);
     PID_Set(&Gimbal.small_yaw.small_yaw_speed_pid, 50.0f, 0.0f, 1.0f, 0.0f, GIMBALMOTOR_MAX_CURRENT, GIMBALMOTOR_MAX_CURRENT);
     PID_Set(&Gimbal.pitch.pitch_auto_speed_pid, 0.165f, 0, 0.2, 0.0f, 7, 0.1);
-    PID_Set(&Gimbal.small_yaw.small_yaw_auto_speed_pid, 70.0f, 0.0f, 2.0f, 0.0f, GIMBALMOTOR_MAX_CURRENT, GIMBALMOTOR_MAX_CURRENT);
+    PID_Set(&Gimbal.small_yaw.small_yaw_auto_speed_pid, 78.0f, 0.0f, 3.0f, 0.0f, GIMBALMOTOR_MAX_CURRENT, GIMBALMOTOR_MAX_CURRENT);
     /*PID位置环初始化*/
     // 遥控
     PID_Set(&Gimbal.pitch.pitch_location_pid, 16.0f, 0.0f, 10.0f, 0.0f, 12.57, 1000);
     PID_Set(&Gimbal.small_yaw.small_yaw_location_pid, 4.0f, 0.0f, 1.0f, 0.0f, GIMBALMOTOR_MAX_CURRENT, 1000);
     // 自瞄
     PID_Set(&Gimbal.pitch.pitch_auto_location_pid, 16.0f, 0.0f, 10, 0.0f, 12.57, 100);
-    PID_Set(&Gimbal.small_yaw.small_yaw_auto_location_pid, 7.0f, 0.012f, 2.5f, 0.0f, GIMBALMOTOR_MAX_CURRENT, 1000);
+    PID_Set(&Gimbal.small_yaw.small_yaw_auto_location_pid, 13.0f, 0.0f, 3.5f, 0.0f, GIMBALMOTOR_MAX_CURRENT, 1000);
 
     // 云台零点初始化
     DJIMotor_SetZero(SMALL_YAW_ZERO,SMALLYAWMotor);

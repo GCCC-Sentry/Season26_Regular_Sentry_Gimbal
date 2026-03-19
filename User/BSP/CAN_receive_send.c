@@ -80,7 +80,7 @@ void Can_Init(void)
 **/
 uint8_t Fdcanx_SendData(FDCAN_HandleTypeDef *hfdcan, uint16_t id, uint8_t *data, uint32_t len)
 {
-  static FDCAN_TxHeaderTypeDef TxHeader;
+  FDCAN_TxHeaderTypeDef TxHeader;
 
   TxHeader.Identifier = id;
   TxHeader.IdType = FDCAN_STANDARD_ID;              // ±ê×¼ID

@@ -2,8 +2,8 @@
  * @Author: Nas(1319621819@qq.com)
  * @Date: 2025-11-03 00:07:24
  * @LastEditors: Nas(1319621819@qq.com)
- * @LastEditTime: 2026-03-18 01:38:22
- * @FilePath: \Regular_Sentry_Gimbal\User\Software\Auto_control.c
+ * @LastEditTime: 2026-03-19 12:49:25
+ * @FilePath: \Season26_Regular_Sentry_Gimbal\User\Software\Auto_control.c
  */
 
 #include "Auto_control.h"
@@ -230,8 +230,8 @@ void MINIPC_to_STM32()
         else if (delta < -PI) delta += 2.0f * PI;
         
         // 一阶低通滤波
-        filtered_target_yaw += 0.65f * delta;
-        filtered_target_pitch = 0.75f * target_pitch + 0.25f * filtered_target_pitch;
+        filtered_target_yaw += 0.9f * delta;
+        filtered_target_pitch = 0.9f * target_pitch + 0.1f * filtered_target_pitch;
     }
     
     // 计算偏差
@@ -245,13 +245,13 @@ void MINIPC_to_STM32()
     if (delta_yaw > PI) delta_yaw -= 2.0f * PI;
     else if (delta_yaw < -PI) delta_yaw += 2.0f * PI;
     // 死区处理，避免小幅抖动
-    const float YAW_DEADZONE = 0.005f;   // 约0.34度
+/*     const float YAW_DEADZONE = 0.005f;   // 约0.34度
     const float PITCH_DEADZONE = 0.005f;
 
     if (fabs(delta_yaw) < YAW_DEADZONE)
         delta_yaw = 0.0f;
     if (fabs(delta_pitch) < PITCH_DEADZONE)
-        delta_pitch = 0.0f;
+        delta_pitch = 0.0f; */
     
     Global.Auto.input.shoot_yaw = delta_yaw;
     Global.Auto.input.shoot_pitch = delta_pitch;
@@ -266,7 +266,7 @@ void MINIPC_to_STM32()
         Global.Auto.input.fire = -1;
         first_data = 1;
     }
-   /* float current_yaw_rad = degree2rad(imu_gimbal.yaw);  
+/*    float current_yaw_rad = degree2rad(imu_gimbal.yaw);  
     float current_pitch_rad = degree2rad(imu_gimbal.pitch); 
     // 计算目标与当前的偏差
     float delta_yaw = fromMINIPC.yaw - current_yaw_rad;
@@ -319,13 +319,13 @@ void Auto_Control()
     // 直接加到当前角度上
     
     // Yaw控制：yaw_cnt(度) + shoot_yaw(弧度转度)
-/*     Auto_data.target_yaw = imu_gimbal.yaw_cnt + (180.0 / 3.14159265358979323846) * Global.Auto.input.shoot_yaw;
+    Auto_data.target_yaw = imu_gimbal.yaw_cnt + (180.0 / 3.14159265358979323846) * Global.Auto.input.shoot_yaw;
     Gimbal_SetYawAngle(Auto_data.target_yaw);
     
     // Pitch控制：pitch(度) + shoot_pitch(弧度转度)
     Auto_data.target_pitch = imu_gimbal.pitch + (180.0 / 3.14159265358979323846) * Global.Auto.input.shoot_pitch;
-    Gimbal_SetPitchAngle(-Auto_data.target_pitch); */
-    static float smooth_target_yaw = 0.0f;
+    Gimbal_SetPitchAngle(-Auto_data.target_pitch);
+/*     static float smooth_target_yaw = 0.0f;
     static float smooth_target_pitch = 0.0f;
     static uint8_t first_run = 1;
     
@@ -342,11 +342,11 @@ void Auto_Control()
     else
     {
         // 目标平滑（避免目标突变）
-        smooth_target_yaw = 0.9f * new_target_yaw + 0.1f * smooth_target_yaw;
+        smooth_target_yaw = 0.85f * new_target_yaw + 0.15f * smooth_target_yaw;
         smooth_target_pitch = new_target_pitch /* + 0.15f * smooth_target_pitch */;
-    }
+/*     }
     
     Gimbal_SetYawAngle(smooth_target_yaw);
-    Gimbal_SetPitchAngle(-smooth_target_pitch);
+    Gimbal_SetPitchAngle(-smooth_target_pitch);  */
 }
 

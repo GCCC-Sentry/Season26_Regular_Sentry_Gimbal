@@ -2,8 +2,8 @@
  * @Author: Nas(1319621819@qq.com)
  * @Date: 2025-11-03 00:07:24
  * @LastEditors: Nas(1319621819@qq.com)
- * @LastEditTime: 2026-02-07 15:00:25
- * @FilePath: \Regular_Sentry_Gimbal\User\Hardware\Motor\motor.c
+ * @LastEditTime: 2026-03-19 11:50:10
+ * @FilePath: \Season26_Regular_Sentry_Gimbal\User\Hardware\Motor\motor.c
  */
 /**
  * @file motor.c
@@ -175,12 +175,12 @@ void DJIMotor_SendCurrent(DJIcan_send_id_e CAN_Send_ID, DJIcan_send_id_e CAN_Typ
     uint16_t identifier;
     FDCAN_HandleTypeDef *hcan;
 
-    if (hfdcan1.ErrorCode)
+/*     if (hfdcan1.ErrorCode)
         HAL_FDCAN_ErrorCallback(&hfdcan1);
     if (hfdcan2.ErrorCode)
         HAL_FDCAN_ErrorCallback(&hfdcan2);
     if (hfdcan3.ErrorCode)
-        HAL_FDCAN_ErrorCallback(&hfdcan3);
+        HAL_FDCAN_ErrorCallback(&hfdcan3); */
 
     // 判断电机类型以及电机ID
     switch (CAN_Send_ID)
@@ -228,6 +228,8 @@ void DJIMotor_SendCurrent(DJIcan_send_id_e CAN_Send_ID, DJIcan_send_id_e CAN_Typ
     default:
         return;
     }
+    if(hcan->ErrorCode)
+    HAL_FDCAN_ErrorCallback(hcan);
     // 三路can依次赋值
     for (int i = 0; i < 8; i += 2)
     {

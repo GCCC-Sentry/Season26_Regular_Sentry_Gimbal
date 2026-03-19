@@ -1,7 +1,7 @@
 /*
  * @Date: 2025-10-24 19:37:34
  * @LastEditors: Nas(1319621819@qq.com)
- * @LastEditTime: 2026-03-18 18:29:33
+ * @LastEditTime: 2026-03-19 22:18:34
  * @FilePath: \Season26_Regular_Sentry_Gimbal\Core\Src\freertos.c
  */
 /* USER CODE BEGIN Header */
@@ -289,6 +289,7 @@ void Chassis_Task(void *argument)
         Send_to_Chassis_2();
         Send_to_Chassis_3();
         Send_to_Chassis_7();
+        Send_to_Chassis_6();
         break;
       
       case 1:
@@ -296,6 +297,7 @@ void Chassis_Task(void *argument)
         Send_to_Chassis_4();
         Send_to_Chassis_2();
         Send_to_Chassis_7();
+        Send_to_Chassis_6();
         break;
 
       case 2:
@@ -355,7 +357,7 @@ void Motor_control_Task(void *argument)
     
     if (Global.Chassis.input.reset != 1)
       HAL_IWDG_Refresh(&hiwdg1); 
-    // Fdcanx_SendData(&hfdcan1,0x200,can_data,8);
+    
     osDelay(1);
   }
   /* USER CODE END Motor_control_Task */
@@ -379,7 +381,7 @@ void Shoot_Task(void *argument)
     
   if (Global.Auto.mode != NONE &&  Global.Auto.input.Auto_control_online > 0 && Global.Auto.input.fire == -1 )
   {
-    /* Scan(); */
+    Scan();
     Auto_data.is_scaning = 1;
   }
   
