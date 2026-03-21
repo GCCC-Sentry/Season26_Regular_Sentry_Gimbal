@@ -2,7 +2,7 @@
  * @Author: Nas(1319621819@qq.com)
  * @Date: 2025-11-03 00:07:24
  * @LastEditors: Nas(1319621819@qq.com)
- * @LastEditTime: 2026-03-20 03:08:56
+ * @LastEditTime: 2026-03-20 16:54:09
  * @FilePath: \Season26_Regular_Sentry_Gimbal\User\Software\Chassis.c
  */
 
@@ -476,11 +476,11 @@ void Mode_Switch()
         }
         else if (Global.Chassis.mode == SPIN_P)
         {
-            Global.Chassis.input.r = 60 * RPM_TO_DEG_S;       
+            Global.Chassis.input.r = 80 * RPM_TO_DEG_S;       
         }
         else // SPIN_N
         {
-            Global.Chassis.input.r = -60 * RPM_TO_DEG_S;
+            Global.Chassis.input.r = -120 * RPM_TO_DEG_S;
         }
         break;
 
@@ -509,11 +509,11 @@ void Mode_Switch()
 
                                 if (hurt_high_spin_latched)
                                 {
-                                    Global.Chassis.input.r = 80 * RPM_TO_DEG_S;
+                                    Global.Chassis.input.r = 90 * RPM_TO_DEG_S;
                                 }
                                 else
                                 {
-                                    Global.Chassis.input.r = 40 * RPM_TO_DEG_S;
+                                    Global.Chassis.input.r = 70 * RPM_TO_DEG_S;
                                 }
                             }
                         else
