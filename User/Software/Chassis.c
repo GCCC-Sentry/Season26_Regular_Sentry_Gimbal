@@ -2,7 +2,7 @@
  * @Author: Nas(1319621819@qq.com)
  * @Date: 2025-11-03 00:07:24
  * @LastEditors: Nas(1319621819@qq.com)
- * @LastEditTime: 2026-03-20 16:54:09
+ * @LastEditTime: 2026-03-22 08:37:38
  * @FilePath: \Season26_Regular_Sentry_Gimbal\User\Software\Chassis.c
  */
 
@@ -78,234 +78,6 @@ void Chassis_Init()
     srand(HAL_GetTick());
 
 }
-
-
-
-
-/*-------------------- PowerLimit --------------------*/
-
-/**
- * @brief          底盘功率限制核心算法 (Predictive Power Limiting)
- * @author         Nas (1319621819@qq.com)
- * @note           该算法基于电机动力学模型，而非简单的电流钳位。
- * 模型公式: P_total = P_mech + P_loss
- * P_total = (k0*I*w) + (k1*|w| + k2*I^2*R + k3)
- * 其中:
-
- * * 工作流程:
- * 1. 获取 PID 计算出的原始目标电流 (I_cmd) 和当前转速 (w)。
- * 2. 代入模型计算 "如果执行该电流，总功率会是多少" (P_predict)。
- * 3. 比较 P_predict 与 P_limit (裁判限制+电容补偿)。
- * 4. 如果超标，计算缩放系数 k = P_limit / P_predict。
- * 5. 将所有轮子的目标电流乘以 k，实现平滑降功率。
- *
- * @param[in]      max_power: 当前允许的最大输入功率 (W)
- */
-/* ===================================================================================
- * 高级功率控制模块
- * (Dual-Limiter & Predictive Power Control)
- * ===================================================================================
- * 核心思想：
- * 1. 物理建模：不只看输出功率，更看重发热损耗 (I^2*R)。
- * 2. 预测控制：在电流发给电机前，先算算会不会超功率。
- * 3. 优先级仲裁：舵向电机(6020)决定航向，优先级高于轮向电机(3508)。
- * ===================================================================================
- */
-
-/**
- * @brief          【辅助函数】预测一组电机的功率消耗
- * @author         Adapted for ADAM (Reference: SJTU-SG)
- * @param[in]      lim:       限制器参数结构体 (包含 k0, k1, k2, k3)
- * @param[in]      currents:  4个电机的电流控制值数组 (Raw Value, e.g., 0~16384)
- * @param[in]      speeds:    4个电机的实际转速数组 (单位: rad/s)
- * @param[in]      is_steer:  是否为舵向电机 (1:是, 0:否) - 用于区分电流单位转换
- * @note           
- * 物理模型公式: P_total = P_mech + P_heat + P_const
- * P_predict = (k0 * T * w) + (k1 * |w|) + (k2 * T^2) + (k3 / 4)
- * - k0*I*w: 机械功率 (转矩*转速)
- * - k2*I^2: 焦耳热损耗 (最主要的超功率来源)
- */
-/* void PowerLimit_Predict(PowerLimiter_t *lim, int16_t *currents, float *speeds, uint8_t is_steer) 
-{
-    float total_p = 0.0f;
-    
-    // 定义电流转换系数：将代码中的 Raw 值转换为物理电流 Amps
-    // M3508 (轮向): 最大电流 20A 对应 16384 (或根据实际PID输出上限调整)
-    // GM6020 (舵向): 最大电流约 3A 对应 30000 (或 16384，取决于电调固件和PID设置)
-    // 修正：这里假设 GM6020 PID上限也是 MAX_CURRENT(16384)，对应 3A
-    float raw2amp_ratio = is_steer ? (3.0f / 16384.0f) : (20.0f / 16384.0f); 
-
-    for(int i = 0; i < 4; i++) 
-    {
-        // 1. 单位转换: Raw -> Amp
-        // 只有转成真实电流，k0(Nm/A) 和 k2(R) 这种物理参数才有意义
-        float i_real = (float)currents[i] * raw2amp_ratio; 
-        float w_real = speeds[i]; // rad/s
-
-        // 2. 计算力矩 Torque = k0 * Current
-        // 注意：这里的 lim->k0 应该是物理意义上的转矩常数 (Nm/A)
-        float torque = i_real * lim->k0;
-
-        // 3. 代入物理模型计算单轮功率
-        // [Term 1] torque * w_real:        机械功率 (做功)
-        // [Term 2] k1 * fabsf(w_real):     粘滞摩擦损耗 (与速度成正比)
-        // [Term 3] k2 * torque^2:          焦耳热损耗 (I^2*R) -> **这是超功率的罪魁祸首**
-        // [Term 4] k3 / 4.0f:              静态损耗 (电路板功耗等) 平均分给4个轮子
-        float p_item = torque * w_real + 
-                       lim->k1 * fabsf(w_real) + 
-                       lim->k2 * torque * torque + 
-                       lim->k3 / 4.0f;
-        
-        // 4. 累计功率
-        // 策略：只统计耗能(正功)。如果是刹车/反拖产生的发电(负功)，暂时忽略或视为0。
-        // 因为裁判系统只检测输出功率，不检测回充功率（除非你有主动泄放电路）。
-        if(p_item > 0.0f) 
-        {
-            total_p += p_item; 
-        }
-    }
-    
-    // 保存预测结果
-    lim->predict_power = total_p;
-} */
-
-/**
- * @brief          【辅助函数】计算缩放系数并应用限制
- * @author         Nas (1319621819@qq.com)
- * @param[in/out]  lim:          限制器结构体 (读取predict, 写入scaling)
- * @param[in]      limit_power:  分配给该组电机的功率限额 (W)
- * @param[in/out]  currents:     4个电机的电流数组 (将被原地修改为限制后的值)
- * @note           
- * 核心算法：开根号缩放 (Sqrt Scaling)
- * 因为功率 P 与电流 I 的关系主要是二次方 (P ∝ I^2 * R)，
- * 所以电流的缩放比例应该是功率比例的开根号。
- * 例如：预测 120W，限制 30W (1/4)。
- * - 线性缩放: I_new = I_old * 0.25 --> P_new ≈ 120 * 0.0625 = 7.5W (限制过头了！)
- * - 根号缩放: I_new = I_old * 0.50 --> P_new ≈ 120 * 0.25 = 30W (完美！)
- */
-/* void PowerLimit_Apply(PowerLimiter_t *lim, float limit_power, int16_t *currents) 
-{
-    // 情况A: 预测功率小于限制，无需限制
-    if (lim->predict_power <= limit_power) {
-        lim->scaling_factor = 1.0f;
-        return;
-    }
-    
-    // 情况B: 超功率，计算缩放比例
-    // ratio = 允许 / 预测
-    float ratio = limit_power / lim->predict_power;
-    
-    // 安全检查
-    if (ratio < 0.0f) ratio = 0.0f;
-    
-    // **核心优化**: 使用 sqrtf 进行开根号逼近
-    // 因为 P ∝ I^2，所以 I_scale ≈ sqrt(P_scale)
-    lim->scaling_factor = sqrtf(ratio); 
-    
-    // 二次安全限幅
-    if(lim->scaling_factor > 1.0f) lim->scaling_factor = 1.0f;
-    
-    // 应用缩放系数到每一个电机
-    for(int i = 0; i < 4; i++) {
-        currents[i] = (int16_t)(currents[i] * lim->scaling_factor);
-    }
-} */
-
-/**
- * @brief          【主入口】双限制器功率控制逻辑
- * @author         Nas (1319621819@qq.com)
- * @param[in]      total_max_power: 总功率限制 (裁判系统限制 + 电容额外功率)
- * @note           
- * 调用流程:
- * 1. 准备数据 (指针操作)
- * 2. 预测 (Predict): 算算舵向和轮向各想吃多少功率
- * 3. 仲裁 (Arbitrate): 舵向优先吃饱，剩下的残羹剩饭给轮向
- * 4. 限制 (Apply): 根据分配的额度，计算缩放系数并修改电流
- */
-/* void Chassis_PowerControl_Total(float total_max_power) {
-    
-    /* ------------------ 1. 数据准备 (Data Preparation) ------------------ */
-    // 使用指针数组，方便在一个 for 循环里处理 4 个电机，避免写 4 遍重复代码
-    
-    // [轮向电机] 电流指针 (指向 Chassis 结构体中的真实变量)
-/*    int16_t *wheel_cur_ptr[] = {
-        &Chassis.forward_FL.wheel_current_FL, 
-        &Chassis.forward_FR.wheel_current_FR, 
-        &Chassis.forward_BL.wheel_current_BL, 
-        &Chassis.forward_BR.wheel_current_BR
-    };
-    // [轮向电机] 实际转速 (rad/s)
-    float wheel_spd[] = {
-        Chassis.forward_FL.current_velocity_FL, 
-        Chassis.forward_FR.current_velocity_FR, 
-        Chassis.forward_BL.current_velocity_BL, 
-        Chassis.forward_BR.current_velocity_BR
-    };
-    
-    // [舵向电机] 电流指针
-    int16_t *steer_cur_ptr[] = {
-        &Chassis.turn_FL.current_steer_FL, 
-        &Chassis.turn_FR.current_steer_FR, 
-        &Chassis.turn_BL.current_steer_BL, 
-        &Chassis.turn_BR.current_steer_BR
-    };
-    // [舵向电机] 实际转速 (需要将 RPM 转为 rad/s)
-    // 1 rpm = 2*pi/60 rad/s ≈ 0.10472 rad/s
-    float steer_spd[] = {
-        CHASSISMotor_get_data(WHEEL_TURN_FL).speed_rpm * RPM_TO_RAD_S, 
-        CHASSISMotor_get_data(WHEEL_TURN_FR).speed_rpm * RPM_TO_RAD_S,
-        CHASSISMotor_get_data(WHEEL_TURN_BL).speed_rpm * RPM_TO_RAD_S,
-        CHASSISMotor_get_data(WHEEL_TURN_BR).speed_rpm * RPM_TO_RAD_S
-    };
-    
-    // 将结构体中的 PID 原始计算值提取到临时数组中进行处理
-    int16_t w_c[4] = {*wheel_cur_ptr[0], *wheel_cur_ptr[1], *wheel_cur_ptr[2], *wheel_cur_ptr[3]};
-    int16_t s_c[4] = {*steer_cur_ptr[0], *steer_cur_ptr[1], *steer_cur_ptr[2], *steer_cur_ptr[3]};
-
-    /* ------------------ 2. 功率预测 (Prediction) ------------------ */
-    // 分别预测舵向组和轮向组，如果全速执行，会消耗多少功率
-    
-    // 预测舵向 (is_steer = 1)
-/*    PowerLimit_Predict(&Chassis.limiter_steer, s_c, steer_spd, 1);
-    
-    // 预测轮向 (is_steer = 0)
-    PowerLimit_Predict(&Chassis.limiter_wheel, w_c, wheel_spd, 0);
-
-    /* ------------------ 3. 优先级分配 (Priority Arbitration) ------------------ */
-    // 逻辑：舵向电机如果转不到位，底盘会乱跑，不仅无法移动还会产生巨大阻力。
-    // 所以：必须优先满足舵向电机的功率需求。
-    
- /*   float steer_need = Chassis.limiter_steer.predict_power;
-    
-    // 计算轮向电机可用的剩余功率
-    // Wheel_Limit = Total - Steer_Need
-    float wheel_limit = total_max_power - steer_need;
-    
-    // 舵向电机允许使用全部功率 (理论上)
-    float steer_limit = total_max_power;
-
-    // [兜底保护]
-    // 即使舵向吃完了功率，也得给轮子留一口气 (比如10W)，防止除零错误或完全失去动力
-    if (wheel_limit < 10.0f) wheel_limit = 10.0f; 
-
-    /* ------------------ 4. 执行限制 (Execution) ------------------ */
-    
-    // 先限制舵向
-    // 虽然给了它很高额度，但如果它本身需求 > 总额度，这里也会进行缩放
-/*    PowerLimit_Apply(&Chassis.limiter_steer, steer_limit, s_c);
-    
-    // 再限制轮向
-    // 用剩下的功率去限制轮子，这里通常会发生显著的电流缩减
-    PowerLimit_Apply(&Chassis.limiter_wheel, wheel_limit, w_c);
-
-    /* ------------------ 5. 写入结果 (Write Back) ------------------ */
-    // 将计算好并缩放过的电流值，写回 Chassis 结构体，等待 Controller 发送
-/*    for(int i = 0; i < 4; i++) {
-        *wheel_cur_ptr[i] = w_c[i];
-        *steer_cur_ptr[i] = s_c[i];
-    }
-} */
-
 
 /*-------------------- AngleLimit --------------------*/
 
@@ -509,11 +281,11 @@ void Mode_Switch()
 
                                 if (hurt_high_spin_latched)
                                 {
-                                    Global.Chassis.input.r = 90 * RPM_TO_DEG_S;
+                                    Global.Chassis.input.r = 108 * RPM_TO_DEG_S;
                                 }
                                 else
                                 {
-                                    Global.Chassis.input.r = 70 * RPM_TO_DEG_S;
+                                    Global.Chassis.input.r = 80 * RPM_TO_DEG_S;
                                 }
                             }
                         else

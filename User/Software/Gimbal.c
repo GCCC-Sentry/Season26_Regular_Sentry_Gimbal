@@ -2,7 +2,7 @@
  * @Author: Nas(1319621819@qq.com)
  * @Date: 2025-11-03 00:07:24
  * @LastEditors: Nas(1319621819@qq.com)
- * @LastEditTime: 2026-03-20 00:40:37
+ * @LastEditTime: 2026-03-22 08:50:48
  * @FilePath: \Season26_Regular_Sentry_Gimbal\User\Software\Gimbal.c
  */
 /*
@@ -248,187 +248,7 @@ void Gimbal_Calculater()
         Global.Auto.input.Auto_control_online--;
     }
 }
-/* void Gimbal_Calculater()
-{
-    if ((Global.Auto.input.Auto_control_online <= 0 || Global.Auto.mode == NONE || Global.Auto.input.fire == -1) && Global.Gimbal.mode == NORMAL)
-    { 
-        // 手动控制（保持不变）
-        Gimbal.small_yaw.small_yaw_speed_set = PID_Cal(&Gimbal.small_yaw.small_yaw_location_pid, 
-                                                        Gimbal.small_yaw.small_yaw_location_now,
-                                                        Gimbal.small_yaw.small_yaw_location_set);  
-        Gimbal.small_yaw.current = PID_Cal(&Gimbal.small_yaw.small_yaw_speed_pid, 
-                                            Gimbal.small_yaw.small_yaw_speed_now, 
-                                            Gimbal.small_yaw.small_yaw_speed_set); 
-        
-        if (Global.Auto.input.Auto_control_online > 0)
-            Global.Auto.input.Auto_control_online--;
-    }
-    else
-    { 
-        // ===== 三段式自适应控制系统 =====
-        
-        float yaw_error = Gimbal.small_yaw.small_yaw_location_set - Gimbal.small_yaw.small_yaw_location_now;
-        float yaw_error_abs = fabs(yaw_error);
-        
-        // 静态变量
-        static float last_yaw_target = 0.0f;
-        static float yaw_integral = 0.0f;
-        static uint8_t locked = 0;
-        static uint8_t stable_frames = 0;
-        static float last_error = 0.0f;
-        static uint8_t oscillation_count = 0;
-        
-        // ===== 阶段判断 =====
-        enum ControlPhase {
-            PHASE_FAST_APPROACH,    // 快速接近
-            PHASE_PRECISE_TRACK,    // 精确跟踪
-            PHASE_HARD_LOCK         // 硬锁定
-        };
-        
-        enum ControlPhase phase;
-        
-        if (yaw_error_abs > 0.05f) {
-            phase = PHASE_FAST_APPROACH;  // > 2.86度：快速接近
-        } else if (yaw_error_abs > 0.008f) {
-            phase = PHASE_PRECISE_TRACK;  // 0.46-2.86度：精确跟踪
-        } else {
-            phase = PHASE_HARD_LOCK;      // < 0.46度：硬锁定
-        }
-        
-        // ===== 振荡检测 =====
-        if ((last_error * yaw_error < 0) && yaw_error_abs < 0.02f) {
-            oscillation_count++;
-            if (oscillation_count > 3) {
-                // 检测到振荡，强制进入硬锁定
-                phase = PHASE_HARD_LOCK;
-                oscillation_count = 0;
-            }
-        } else {
-            oscillation_count = 0;
-        }
-        last_error = yaw_error;
-        
-        // ===== 速度前馈计算 =====
-        float target_velocity = (Gimbal.small_yaw.small_yaw_location_set - last_yaw_target) / 0.001f;
-        last_yaw_target = Gimbal.small_yaw.small_yaw_location_set;
-        
-        float speed_output = 0.0f;
-        
-        // ===== 根据阶段选择控制策略 =====
-        switch (phase)
-        {
-            case PHASE_FAST_APPROACH:
-            {
-                // 阶段1：快速接近 - 大Kp + 速度前馈
-                locked = 0;
-                stable_frames = 0;
-                yaw_integral = 0.0f;  // 清零积分
-                
-                const float Kp_fast = 12.0f;  // 大Kp，快速响应
-                const float Kd_fast = 1.5f;   // 小Kd，不要过度阻尼
-                const float feedforward_gain = 0.4f;
-                
-                float p_output = Kp_fast * yaw_error;
-                float d_output = -Kd_fast * Gimbal.small_yaw.small_yaw_speed_now;
-                float ff_output = feedforward_gain * target_velocity;
-                
-                speed_output = p_output + d_output + ff_output;
-                
-                // 速度限制（防止过冲）
-                const float max_speed_fast = 15.0f;  // rad/s
-                if (speed_output > max_speed_fast) speed_output = max_speed_fast;
-                if (speed_output < -max_speed_fast) speed_output = -max_speed_fast;
-                
-                break;
-            }
-            
-            case PHASE_PRECISE_TRACK:
-            {
-                // 阶段2：精确跟踪 - 正常PID + 积分
-                locked = 0;
-                stable_frames = 0;
-                
-                const float Kp_track = 8.0f;
-                const float Ki_track = 0.2f;
-                const float Kd_track = 2.5f;
-                const float feedforward_gain = 0.3f;
-                
-                // 积分累积（带限幅）
-                yaw_integral += yaw_error * 0.001f;
-                const float integral_limit = 0.2f;
-                if (yaw_integral > integral_limit) yaw_integral = integral_limit;
-                if (yaw_integral < -integral_limit) yaw_integral = -integral_limit;
-                
-                float p_output = Kp_track * yaw_error;
-                float i_output = Ki_track * yaw_integral;
-                float d_output = -Kd_track * Gimbal.small_yaw.small_yaw_speed_now;
-                float ff_output = feedforward_gain * target_velocity;
-                
-                speed_output = p_output + i_output + d_output + ff_output;
-                
-                break;
-            }
-            
-            case PHASE_HARD_LOCK:
-            {
-                // 阶段3：硬锁定 - 检查稳定性后硬停
-                
-                // 检查是否可以锁定
-                if (!locked)
-                {
-                    if (yaw_error_abs < 0.006f && fabs(Gimbal.small_yaw.small_yaw_speed_now) < 0.5f)
-                    {
-                        stable_frames++;
-                        if (stable_frames >= 5)  // 连续5帧稳定
-                        {
-                            locked = 1;
-                            stable_frames = 0;
-                            yaw_integral = 0.0f;
-                        }
-                    }
-                    else
-                    {
-                        stable_frames = 0;
-                    }
-                }
-                
-                if (locked)
-                {
-                    // 已锁定：完全停止
-                    speed_output = 0.0f;
-                    
-                    // 解锁条件：误差突然增大
-                    if (yaw_error_abs > 0.015f)
-                    {
-                        locked = 0;
-                        stable_frames = 0;
-                    }
-                }
-                else
-                {
-                    // 未锁定：极小Kp微调
-                    const float Kp_lock = 3.0f;
-                    const float Kd_lock = 3.0f;
-                    
-                    float p_output = Kp_lock * yaw_error;
-                    float d_output = -Kd_lock * Gimbal.small_yaw.small_yaw_speed_now;
-                    
-                    speed_output = p_output + d_output;
-                }
-                
-                break;
-            }
-        }
-        
-        // ===== 速度环PID =====
-        Gimbal.small_yaw.small_yaw_speed_set = speed_output;
-        Gimbal.small_yaw.current = PID_Cal(&Gimbal.small_yaw.small_yaw_auto_speed_pid, 
-                                            Gimbal.small_yaw.small_yaw_speed_now, 
-                                            Gimbal.small_yaw.small_yaw_speed_set);
-        
-        Global.Auto.input.Auto_control_online--;
-    }
-} */
+
 
 /*-------------------- Control --------------------*/
 
@@ -494,93 +314,6 @@ void Gimbal_Controller()
 
 }
 
-/* void Gimbal_Controller()
-{
-    static uint8_t last_mode = LOCK;
-    static uint8_t first_run = 1;
-
-    // 第一帧初始化 last_mode
-    if (first_run)
-    {
-        last_mode = Global.Control.mode;
-        first_run = 0;
-    }
-
-    if (Global.Control.mode != LOCK)
-   {
-        // 计算基础重力补偿
-        Gimbal.pitch.gravity_compensation = Gimbal.pitch.k_gravity * cos(Gimbal.pitch.pitch_location_now);
-
-        if (Gimbal.pitch.init_flag == 1)
-        {
-             // 从LOCK模式切换过来瞬间，同步目标值为当前位置，防止突变
-             if (last_mode == LOCK)
-             {
-                Global.Gimbal.input.pitch = -imu_gimbal.pitch;
-                Gimbal.pitch.pitch_location_set = degree2rad(Global.Gimbal.input.pitch);
-
-                Global.Gimbal.input.yaw = imu_gimbal.yaw_cnt;
-                Gimbal.small_yaw.small_yaw_location_set = Global.Gimbal.input.yaw;
-             }
-
-             // ===== 方案2：软件积分补偿 =====
-             // 计算位置误差
-             float pitch_error = Gimbal.pitch.pitch_location_set - Gimbal.pitch.pitch_location_now;
-
-             // 积分项（带限幅防饱和）
-             static float pitch_integral = 0.0f;
-             const float Ki = 0.1f;  // 积分系数（可调：0.05-0.15）
-             const float integral_limit = 0.2f;  // 积分限幅
-             const float error_threshold = 0.1f;  // 误差阈值(5.7度)
-
-             // 只在误差较小且自瞄激活时累积积分
-             if (fabs(pitch_error) < error_threshold &&
-                 Global.Auto.input.fire != -1)
-             {
-                 // 累积积分（假设1ms控制周期）
-                 pitch_integral += pitch_error * 0.001f;
-
-                 // 限幅防饱和
-                 if (pitch_integral > integral_limit) pitch_integral = integral_limit;
-                 if (pitch_integral < -integral_limit) pitch_integral = -integral_limit;
-             }
-             else if (Global.Auto.input.fire == -1)
-             {
-                 // 自瞄失效时清零积分
-                 pitch_integral = 0.0f;
-             }
-
-             // 总前馈 = 重力补偿 + 积分补偿
-             float total_feedforward = Gimbal.pitch.gravity_compensation + Ki * pitch_integral;
-
-             // 目标位置需要加上Offset转换到电机坐标系
-             float pitch_target_motor = Gimbal.pitch.pitch_location_set + Gimbal.pitch.pitch_offset;
-             
-             DMMotor_Set(PITCHMotor, 
-                         pitch_target_motor,                // 目标位置 
-                         0,                                 // 目标速度
-                         total_feedforward,                 // 前馈补偿 (重力补偿+积分补偿)
-                         Gimbal.pitch.kp,                   // 位置比例系数
-                         Gimbal.pitch.kd);                  // 速度阻尼系数
-        }
-        else
-        {
-
-             DMMotor_Set(PITCHMotor, 0, 0, 0, 0, 0.0f); 
-        }
-        
-        DJIMotor_Set(Gimbal.small_yaw.current,SMALLYAWMotor); 
-   }
-   else
-   {
-        DMMotor_Set(PITCHMotor,0,0,0,0,0);
-        DJIMotor_Set(0,SMALLYAWMotor);
-   }
-   
-   last_mode = Global.Control.mode;
-
-} */
-
 /*-------------------- Task --------------------*/
 
 /**
@@ -593,16 +326,7 @@ void Gimbal_Tasks(void)
 #if (USE_GIMBAL != 0)
 	// 云台数据更新
 	Gimbal_Updater();
-   /*  Scan();  */ 
 
-/* 	if (Global.Gimbal.mode == AUTO) 
-    {
-        Scan();
-    } */
-/*    if(Global.Auto.mode == CAR)
-   {
-        Scan();
-   } */
   if (Global.Auto.mode != NONE && 
         Global.Auto.input.Auto_control_online > 0 && 
         Global.Auto.input.fire == -1)
